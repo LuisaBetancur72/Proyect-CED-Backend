@@ -43,8 +43,9 @@ def create():
                     id=request.get_json().get("id", None),
                     date=fecha_date,
                     addressee=request.get_json().get("addressee", None),
-                    type_message=request.get_json().get("type_message", None))
-                    
+                    type_message=request.get_json().get("type_message", None),
+                    description=request.get_json().get("description", None),
+                    creator_user=request.get_json().get("creator_user", None))
     try:
         db.session.add(message)
         db.session.commit()
@@ -76,8 +77,9 @@ def update(id):
     message.id = request.get_json().get("id", message.id)
     message.date = fecha_date
     message.addressee = request.get_jeson().get("addressee", message.addressee),
-    message.type_message = request.get_json().get("type", message.type_message)
-    
+    message.type_message = request.get_json().get("type", message.type_message),
+    message.description = request.get_json().get("description", message.description),
+    message.creator_user = request.get_json().get("creator_user", message.creator_user)
     try:
         db.session.commit()
     except sqlalchemy.exc.IntegrityError as e:
