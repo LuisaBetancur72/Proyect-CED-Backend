@@ -101,7 +101,7 @@ def delete(id):
     except sqlalchemy.exc.IntegrityError as e:
         return {"error": "Invalid resource values", "message": str(e)}, HTTPStatus.BAD_REQUEST
 
-    return {"data": message_schema.dump(message)}, HTTP
+    return {"data": message_schema.dump(message)}, HTTPStatus.OK
 
 
 @message.get("/date/<int:cedula>/")
