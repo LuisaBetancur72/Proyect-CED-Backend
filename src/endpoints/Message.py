@@ -16,7 +16,7 @@ def read_all():
     message = message.query.order_by(message.id).all()
     return {"data": message_schema.dump(message)}, HTTPStatus.OK
 
-@message.get("/message/<int:id>")
+@message.get("user/message/<int:id>")
 @jwt_required()
 def read_one(id):
     
@@ -54,7 +54,7 @@ def create():
 
     return {"data": message_schema.dump(message)}, HTTPStatus.CREATED
 
-@message.put("/id")
+@message.put("user/message/<int:id>")
 @jwt_required()
 def update(id):
     
@@ -86,7 +86,7 @@ def update(id):
         return {"error": "Invalid resource values", "message": str(e)}, HTTPStatus.BAD_REQUEST
     return {"data": message_schema.dump(message)}, HTTPStatus.OK
 
-@message.delete("/<int:id>")
+@message.delete("user/message/<int:id>")
 @jwt_required()
 def delete(id):
     message = Message.query.filter_by(id=id).first()
