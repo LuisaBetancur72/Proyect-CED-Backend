@@ -7,7 +7,7 @@ from datetime import datetime
 
 from flask_jwt_extended import jwt_required
 
-from src.models.Message import Message, message_schema, messages_schema
+from src.models.message import Message, message_schema, messages_schema
 
 message = Blueprint("message",__name__,url_prefix="/api/v1/ingresos")
 
