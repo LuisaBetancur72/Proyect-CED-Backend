@@ -5,8 +5,6 @@ from src.database import db,ma
 import werkzeug
 from src.models.User import User, user_schema, users_schema
 from src.models.Message import Message, message_schema, messages_schema
-
-
 from flask_jwt_extended import jwt_required,get_jwt_identity
 
 users = Blueprint("users",__name__,url_prefix="/api/v1/users")
