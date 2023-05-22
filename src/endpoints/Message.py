@@ -20,7 +20,7 @@ def read_all():
 @jwt_required()
 def read_one(id):
     
-    ingreso = Message.query.filter_by(id=id).all()
+    ingreso = Message.query.filter_by(id=jwt_required).first()
 
     if (not message):
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND

@@ -17,10 +17,10 @@ def read_all():
  return {"data": users_schema.dump(users)}, HTTPStatus.OK
 
 
-@users.get("//<int:cedula>")
+@users.get("/<int:cedula>")
 @jwt_required()
 def read_user(cedula):
-    user = User.query.filter_by(cedula=cedula).first()
+    user = User.query.filter_by(cedula=get_jwt_identity).first()
 
     if(not user):
         return {"error":"Resource not found"}, HTTPStatus.NOT_FOUND
