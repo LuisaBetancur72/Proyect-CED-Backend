@@ -103,3 +103,23 @@ def delete(id):
     return {"data": message_schema.dump(message)}, HTTPStatus.NO_CONTENT
 
 
+@message.get("/user/date/<int:cedula>/")
+@jwt_required()
+def read_by_date_range(cedula):
+    fecha = None
+    try:
+        fecha = request.get_json()
+    
+    except werkzeug.exceptions.BadRequest as e:
+        return {"error": "Get body JSON data not found", 
+                "message": str(e)}, HTTPStatus.BAD_REQUEST
+    
+    fecha_request_i = request.get_json().get("fecha_inicio", None)
+    fecha_request_f = request.get_json().get("fecha_fin", None)  
+        
+    fecha_inicio = datetime.strptime(fecha_request_i, '%Y-%m-%d').date()
+    fecha_fin    = datetime.strptime(fecha_request_f, '%Y-%m-%d').date()
+
+    message = Message.query.filter_by(cedula=cedula).filter(Message.fecha >= fecha_inicio, Message.fecha <= fecha_fin).all()
+        
+    return {"data": messages_schema.dump(message)}, HTTPStatus.OK
