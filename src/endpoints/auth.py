@@ -5,8 +5,6 @@ from src.database import jwt
 
 from src.models.user import User, user_schema, users_schema
 
-from src.models.user import User, user_schema, users_schema 
-
 auth = Blueprint("auth",
                 __name__,
                 url_prefix="/api/v1/auth")
@@ -14,15 +12,15 @@ auth = Blueprint("auth",
 
 @auth.post("/login")
 def login():
-    email = request.get_json().get("email", None)
+    username = request.get_json().get("username", None)
     password = request.get_json().get("password", None)
 
-    user = User.query.filter_by(email=email).one_or_none()
+    user = User.query.filter_by(email=username).one_or_none()
     
     if not user or not user.check_password(password):
-        return {"error": "Wrong username or password"}, HTTPStatus.UNAUTHORIZED 
+        return {"error": "Wrong username or password"}, HTTPStatus.UNAUTHORIZED
     
-    access_token = create_access_token(identity=user_schema.dump(user)) 
-    response = {"access_token": access_token} 
+    access_token = create_access_token(identity=user_schema.dump(user))
+    response = {"access_token": access_token}
 
-    return response, HTTPStatus.OK 
+    return response, HTTPStatus.OK

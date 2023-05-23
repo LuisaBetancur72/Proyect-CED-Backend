@@ -3,8 +3,6 @@ from src.database import db,ma
 from sqlalchemy.orm import validates
 import re
 
-from src.models.user import User
-
 class Message(db.Model):
     id            =db.Column(db.Integer, primary_key= True, autoincrement=True)
     date          =db.Column(db.Date, nullable=False)
@@ -15,12 +13,13 @@ class Message(db.Model):
     updated_at    =db.Column(db.DateTime, onupdate=datetime.now())
     creator_user  =db.Column(db.String(25),db.ForeignKey('user.email',onupdate="CASCADE",ondelete="RESTRICT"),nullable=False)
     
+    
     def __init__(self, **fields):
         super().__init__(**fields)
-        
+
     def __repr__(self) -> str:
-        return f"User >>> {self.id}"
-    
+        return f"User >>> {self.name}"
+
     @validates(id)
     def validate_id(self,value):
         if not value:
@@ -38,7 +37,7 @@ class Message(db.Model):
             raise value
         if not re.match("[0-9]{1,2}\\-[0-9]{1,2}\\-[0-9]{4}", value):
             raise AssertionError('Provided date is not a real date value')
-        expiration = datetime.datetime.strptime(value, "%Y-%m-%d")
+        date = datetime.datetime.strptime(value, "%Y-%m-%d")
         
         return value
     
@@ -52,7 +51,7 @@ class Message(db.Model):
             raise AssertionError('description must be between 5 and 100 characters')
 
         return value
-    
+        
     @validates(type_message)
     def validate_name(self, key, value):
         if not value:
@@ -75,18 +74,7 @@ class Message(db.Model):
         if Message.query.filter(Message.email == value).first():
             raise AssertionError('Email is already in use')
         return value
-    
-    @validates('creator_user')
-    def validate_creator_user(self, value):
-        if not value:
-            raise AssertionError('No creator user provided')
-        if not value.isalnum():
-            raise AssertionError('Creator user value must be alphanumeric')
-        if User.query.filter(User.id == value).first() is None:
-            raise AssertionError('Creator user does not exist')
 
-        return value
-    
 class MessageSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model=Message
@@ -94,12 +82,3 @@ class MessageSchema(ma.SQLAlchemyAutoSchema):
 
 message_schema = MessageSchema()
 messages_schema = MessageSchema(many=True)
-    
-    
-        
-        
-        
-    
-    
-    
-        

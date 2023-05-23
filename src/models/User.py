@@ -1,24 +1,24 @@
 from datetime import datetime
-from src.database import db,ma 
+from src.database import db,ma
 from werkzeug.security import generate_password_hash,check_password_hash
 from sqlalchemy.orm import validates
 import re
 
+from .message import Message
 
 class User(db.Model):
-    id        =db.Column(db.Integer, primary_key= True, autoincrement=True)
-    email     =db.Column(db.String(60), unique=True, nullable =False)
-    fullname  =db.Column(db.String(80), nullable=False)
-    password  =db.Column(db.String(50), unique= True, nullable=False)
-    phone     =db.Column(db.String(11), nullable=False)
+    id            =db.Column(db.Integer, primary_key= True, autoincrement=True)
+    email         =db.Column(db.String(60), unique=True, nullable =False)
+    fullname      =db.Column(db.String(50), nullable=False)
+    password      =db.Column(db.String(50), unique= True, nullable=False)
+    phone         =db.Column(db.String(11), nullable=False)
     created_at    = db.Column(db.DateTime, default=datetime.now())
     updated_at    = db.Column(db.DateTime, onupdate=datetime.now())
-    
-    messages = db.relationship('Message', backref='owner')
+
+    messages = db.relationship('Message',backref="owner")
     
     def __init__(self, **fields):
         super().__init__(**fields)
-
 
     def __setattr__(self, name, value):
         if(name == "password"):
@@ -27,24 +27,20 @@ class User(db.Model):
         super(User,self).__setattr__(name, value)
 
     @staticmethod
-    def has_password(password): 
+    def hash_password(password):
         if not password:
             raise AssertionError('Password not provided')
-        return generate_password_hash(password)
     
+    #    if not re.match('\d.*[A-Z]|[A-Z].*\d', password):
+    #       raise AssertionError('Password must contain 1 capital letter and 1 number')
+
+    #    if len(password) < 7 or len(password) > 50:
+    #        raise AssertionError('Password must be between 7 and 50 characters')
+        return generate_password_hash(password)
+
+
     def check_password(self,password):
         return check_password_hash(self.password,password)
-    
-    @validates(id)
-    def validate_id(self,value):
-        if not value:
-            raise AssertionError('No id provided')
-        if not value.isalnum():
-            raise AssertionError('Id value must be alphanumeric')
-        if User.query.filter(User.id == value).first():
-            raise AssertionError('Id is already in use')
-
-        return value
     
     @validates(email)
     def validate_email(self,key,value):
@@ -58,8 +54,9 @@ class User(db.Model):
             raise AssertionError('Email is already in use')
         return value
     
+
     @validates(fullname)
-    def validate_fullname(self, value):
+    def validate_nombre(self, value):
         if not value:
             raise AssertionError('No name provided')
         if not value.isalnum():
@@ -68,6 +65,8 @@ class User(db.Model):
             raise AssertionError('Name must be between 5 and 80 characters')
 
         return value
+    
+    
     
     @validates(phone)
     def validate_phone(self,value):
@@ -79,13 +78,12 @@ class User(db.Model):
             raise AssertionError('lastname must be between 10 and 15 characters')
     
         return value
-    
+
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         #fields = ()
         model = User
         include_fk = True
-        
-        
+
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
