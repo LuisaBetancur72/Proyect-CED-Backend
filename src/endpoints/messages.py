@@ -1,51 +1,49 @@
 from flask import Blueprint, request
 from http import HTTPStatus
+import sqlalchemy.exc
+from src.database import db, ma
 import werkzeug
 from datetime import datetime
-import sqlalchemy.exc
-from src.database import db,ma
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from src.models.Message import Message, message_schema, messages_schema
 
-message = Blueprint("message", __name__, url_prefix="/api/v1/message")
+from flask_jwt_extended import jwt_required
 
-@message.get("/")
+from src.models.message import Message, message_schema, messages_schema
+
+messages = Blueprint("messages",__name__,url_prefix="/api/v1/messages")
+
+@messages.get("/")
 def read_all():
     messages = Message.query.order_by(Message.id).all()
     return {"data": messages_schema.dump(messages)}, HTTPStatus.OK
 
-@message.get("/user/<int:id>")
+@messages.get("/user/<int:id>")
 @jwt_required()
 def read_one(id):
-    current_user_id = get_jwt_identity()
     
-    message = Message.query.filter_by(id=id, creator_user=current_user_id).first()
+    message = Message.query.filter_by(id=id).all()
 
-    if not message:
+    if (not message):
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND
 
-    return {"data": message_schema.dump(message)}, HTTPStatus.OK
+    return {"data": messages_schema.dump(message)}, HTTPStatus.OK
 
-@message.post("/")
-@jwt_required()
+@messages.post("/")
 def create():
-    current_user_id = get_jwt_identity()
-
     post_data = None
     
     try:
         post_data = request.get_json()
     except werkzeug.exceptions.BadRequest as e:
         return {"error": "Post body JSON data not found", "message": str(e)}, HTTPStatus.BAD_REQUEST
+    fecha_request = request.get_json().get("fecha", None)
+    fecha_date = datetime.strptime(fecha_request, '%Y-%m-%d').date()
 
-    message = Message(
-        id=request.get_json().get("id", None),
-        date=request.get_json().get("date", None),
+
+    message = Message(date=request.get_json().get("date", None),
         addressee=request.get_json().get("addressee", None),
         type_message=request.get_json().get("type_message", None),
         description=request.get_json().get("description", None),
-        creator_user=current_user_id
-    )
+        creator_user=request.get_json().get("creator_user", None))
 
     try:
         db.session.add(message)
@@ -55,10 +53,9 @@ def create():
 
     return {"data": message_schema.dump(message)}, HTTPStatus.CREATED
 
-@message.put("/<int:id>")
+@messages.put("/id")
 @jwt_required()
 def update(id):
-    current_user_id = get_jwt_identity()
     
     post_data = None
 
@@ -67,32 +64,33 @@ def update(id):
     except werkzeug.exceptions.BadRequest as e:
         return {"error": "Post body JSON data not found", "message": str(e)}, HTTPStatus.BAD_REQUEST
 
-    message = Message.query.filter_by(id=id, creator_user=current_user_id).first()
+    message = Message.query.filter_by(id=id).first()
 
     if not message:
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND
 
-    message.id = request.get_json().get("id", message.id)
+    fecha_request = request.get_json().get("fecha", None)
+    fecha_date = datetime.strptime(fecha_request, '%Y-%m-%d').date()
+
+
     message.date = request.get_json().get("date", message.date)
     message.addressee = request.get_json().get("addressee", message.addressee)
     message.type_message = request.get_json().get("type_message", message.type_message)
     message.description = request.get_json().get("description", message.description)
 
+
     try:
         db.session.commit()
     except sqlalchemy.exc.IntegrityError as e:
         return {"error": "Invalid resource values", "message": str(e)}, HTTPStatus.BAD_REQUEST
-
     return {"data": message_schema.dump(message)}, HTTPStatus.OK
 
-@message.delete("/<int:id>")
+@messages.delete("/<int:id>")
 @jwt_required()
 def delete(id):
-    current_user_id = get_jwt_identity()
-    
-    message = Message.query.filter_by(id=id, creator_user=current_user_id).first()
+    message = Message.query.filter_by(id=id).first()
 
-    if not message:
+    if not messages:
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND
 
     try:
@@ -101,15 +99,15 @@ def delete(id):
     except sqlalchemy.exc.IntegrityError as e:
         return {"error": "Invalid resource values", "message": str(e)}, HTTPStatus.BAD_REQUEST
 
-    return {"data": message_schema.dump(message)}, HTTPStatus.OK
+    return {"data": message_schema.dump(message)}, HTTPStatus.NO_CONTENT
 
 
-@message.get("/date/<int:cedula>/")
+@messages.get("/user/<int:creator_user>/fecha")
 @jwt_required()
-def read_by_date_range(cedula):
-    fecha = None
+def read_by_date_range(creator_user):
+    date = None
     try:
-        fecha = request.get_json()
+        date = request.get_json()
     
     except werkzeug.exceptions.BadRequest as e:
         return {"error": "Get body JSON data not found", 
@@ -121,6 +119,6 @@ def read_by_date_range(cedula):
     fecha_inicio = datetime.strptime(fecha_request_i, '%Y-%m-%d').date()
     fecha_fin    = datetime.strptime(fecha_request_f, '%Y-%m-%d').date()
 
-    message = Message.query.filter_by(cedula=cedula).filter(Message.fecha >= fecha_inicio, Message.fecha <= fecha_fin).all()
+    messages = Message.query.filter_by(creator_user=creator_user).filter(Message.fecha >= fecha_inicio, Message.fecha <= fecha_fin).all()
         
-    return {"data": messages_schema.dump(message)}, HTTPStatus.OK
+    return {"data": messages_schema.dump(messages)}, HTTPStatus.OK
