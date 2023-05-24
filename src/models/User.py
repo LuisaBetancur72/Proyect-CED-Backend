@@ -2,6 +2,7 @@ from datetime import datetime
 from src.database import db,ma
 from werkzeug.security import generate_password_hash,check_password_hash
 from sqlalchemy.orm import validates
+from sqlalchemy import event
 import re
 
 from .message import Message
@@ -43,18 +44,17 @@ class User(db.Model):
         return check_password_hash(self.password,password)
     
     @validates(email)
-    def validate_email(self,key,value):
-        if  not value:
+    def validate_email(self, key, value):
+        if not value:
             raise AssertionError('Email not provided')
         if not re.match("[^@]+@[^@]+\.[^@]+", value):
-               raise AssertionError('Provided email is not an email address')
-        if not value.endswith('@autonoma'):
-            raise AssertionError('Email domain must be @autonoma')
+            raise AssertionError('Provided email is not a valid email address')
+        if not value.endswith('@autonoma.com'):
+            raise AssertionError('Email domain must be @autonoma.com')
         if User.query.filter(User.email == value).first():
             raise AssertionError('Email is already in use')
         return value
     
-
     @validates(fullname)
     def validate_nombre(self, value):
         if not value:

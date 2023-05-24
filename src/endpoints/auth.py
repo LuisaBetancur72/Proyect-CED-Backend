@@ -12,10 +12,10 @@ auth = Blueprint("auth",
 
 @auth.post("/login")
 def login():
-    username = request.get_json().get("username", None)
+    email = request.get_json().get("email", None)
     password = request.get_json().get("password", None)
 
-    user = User.query.filter_by(email=username).one_or_none()
+    user = User.query.filter_by(email=email).one_or_none()
     
     if not user or not user.check_password(password):
         return {"error": "Wrong username or password"}, HTTPStatus.UNAUTHORIZED
