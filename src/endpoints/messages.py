@@ -12,30 +12,35 @@ from src.models.message import Message, message_schema, messages_schema
 messages = Blueprint("messages",__name__,url_prefix="/api/v1/user/messages")
 
 @messages.get("/")
-
+@jwt_required()
 def read_all():
     current_user_id = get_jwt_identity()  
-    messages = Message.query.filter_by(creator_user=current_user_id).first()
+    creator_user= current_user_id["id"]
+    
+    messages = Message.query.filter_by(creator_user=creator_user).first()
       
     messages = Message.query.order_by(Message.id).all()
     return {"data": messages_schema.dump(messages)}, HTTPStatus.OK
+
 
 @messages.get("/<int:id>")
 @jwt_required()
 def read_one(id):
     current_user_id = get_jwt_identity()
+    creator_user =current_user_id["id"]
     
-    message = Message.query.filter_by(id=id, creator_user=current_user_id).first()
+    message = Message.query.filter_by(id=id, creator_user=creator_user).first()
 
     if (not message):
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND
 
-    return {"data": messages_schema.dump(message)}, HTTPStatus.OK
+    return {"data": message_schema.dump(message)}, HTTPStatus.OK
 
 @messages.post("/")
 @jwt_required()
 def create():
     current_user_id = get_jwt_identity()
+    creator_user= current_user_id["id"]
     
     post_data = None
     try:
@@ -51,7 +56,7 @@ def create():
         addressee=request.get_json().get("addressee", None),
         type_message=request.get_json().get("type_message", None),
         description=request.get_json().get("description", None),
-        creator_user=current_user_id
+        creator_user=creator_user
         )
 
     try:
@@ -65,7 +70,8 @@ def create():
 @messages.put("/<int:id>")
 @jwt_required()
 def update(id):
-    current_user_id=get_jwt_identity()
+    current_user_id = get_jwt_identity()
+    creator_user = current_user_id["id"]
     
     post_data = None
 
@@ -74,31 +80,35 @@ def update(id):
     except werkzeug.exceptions.BadRequest as e:
         return {"error": "Post body JSON data not found", "message": str(e)}, HTTPStatus.BAD_REQUEST
 
-    message = Message.query.filter_by(id=id, creator_user=current_user_id).first()
+    message = Message.query.filter_by(id=id, creator_user=creator_user).first()
 
     if not message:
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND
 
-    data_request = request.get_json().get("fecha", None)
-    date_m = datetime.strptime(data_request, '%Y-%m-%d').date()
-
-
-    message.date = date_m,
-    message.addressee = request.get_json().get("addressee", message.addressee)
-    message.type_message = request.get_json().get("type_message", message.type_message)
-    message.description = request.get_json().get("description", message.description)
+    date_request = post_data.get("date")
+    if date_request:
+        try:
+            date_obj = datetime.strptime(date_request, "%Y-%m-%d").date()
+            message.date = date_obj
+        except ValueError:
+            return {"error": "Invalid date format", "date": date_request}, HTTPStatus.BAD_REQUEST
+        message.addressee = post_data.get("addressee", message.addressee)
+        message.type_message = post_data.get("type_message", message.type_message)
+        message.description = post_data.get("description", message.description)
 
     try:
         db.session.commit()
     except sqlalchemy.exc.IntegrityError as e:
         return {"error": "Invalid resource values", "message": str(e)}, HTTPStatus.BAD_REQUEST
-    return {"data": message_schema.dump(message)}, HTTPStatus.OK
+
+    return {"data": message_schema.dump(message)},HTTPStatus.OK
 
 @messages.delete("/<int:id>")
 @jwt_required()
 def delete(id):
     current_user_id=get_jwt_identity()
-    message = Message.query.filter_by(id=id, creator_user=current_user_id).first()
+    creator_user = current_user_id["id"]
+    message = Message.query.filter_by(id=id, creator_user=creator_user).first()
     
     if not messages:
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND

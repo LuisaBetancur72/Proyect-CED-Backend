@@ -63,15 +63,15 @@ class Message(db.Model):
         return value
     
     @validates(addressee)
-    def validate_email(self,key,value):
-        if  not value:
-            raise AssertionError('Email not provided')
+    def validate_email(self, key, value):
+        if not value:
+            raise AssertionError('addressee not provided')
         if not re.match("[^@]+@[^@]+\.[^@]+", value):
-               raise AssertionError('Provided email is not an email address')
-        if not value.endswith('@autonoma'):
-            raise AssertionError('Email domain must be @autonoma')
-        if Message.query.filter(Message.email == value).first():
-            raise AssertionError('Email is already in use')
+            raise AssertionError('Provided email is not a valid addressee address')
+        if not value.endswith('@autonoma.com'):
+            raise AssertionError('addressee domain must be @autonoma.com')
+        if Message.query.filter(Message.addressee == value).first():
+            raise AssertionError('addressee is already in use')
         return value
     
 class MessageSchema(ma.SQLAlchemyAutoSchema):

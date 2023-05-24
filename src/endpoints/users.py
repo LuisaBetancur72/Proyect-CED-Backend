@@ -19,15 +19,13 @@ def read_all():
 @users.get("/")
 @jwt_required()
 def read_user():
-    user_data = user_schema.load(get_jwt_identity())
-    user_id = user_data["id"]
-    
+    current_user_id=get_jwt_identity()
+    user_id=current_user_id["id"]
     user = User.query.filter_by(id=user_id).first()
     if(not user):
         return {"error":"Resource not found"}, HTTPStatus.NOT_FOUND
 
     return {"data":user_schema.dump(user)},HTTPStatus.OK
-
 
 @users.post("/")
 def create():
@@ -55,6 +53,7 @@ def create():
 @jwt_required()
 def update():
     current_user_id=get_jwt_identity()
+    email= current_user_id["email"]
     post_data=None
 
     try:
@@ -64,7 +63,7 @@ def update():
         return {"error":"Post body JSON data not found",
                 "message":str(e)}, HTTPStatus.BAD_REQUEST
 
-    user=User.query.filter_by(id=current_user_id).first()
+    user=User.query.filter_by(email=email).first()
 
     if(not user):
         return {"error":"Resource not found"}, HTTPStatus.NOT_FOUND
@@ -82,12 +81,13 @@ def update():
 
     return {"data":user_schema.dump(user)}, HTTPStatus.OK
 
-@users.delete("/elimina")
+@users.delete("/eliminar")
 @jwt_required()
 def delete():
     current_user_id=get_jwt_identity()
+    user_id= current_user_id["id"]
     
-    user = User.query.filter_by(id=current_user_id).first()
+    user = User.query.filter_by(id=user_id).first()
     if (not user):
         return {"error":"Resource not found"}, HTTPStatus.NOT_FOUND
 
