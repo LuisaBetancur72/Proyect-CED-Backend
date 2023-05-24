@@ -5,22 +5,27 @@ from src.database import db, ma
 import werkzeug
 from datetime import datetime
 
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from src.models.message import Message, message_schema, messages_schema
 
-messages = Blueprint("messages",__name__,url_prefix="/api/v1/messages")
+messages = Blueprint("messages",__name__,url_prefix="/api/v1/user/messages")
 
 @messages.get("/")
+
 def read_all():
+    current_user_id = get_jwt_identity()  
+    messages = Message.query.filter_by(creator_user=current_user_id).first()
+      
     messages = Message.query.order_by(Message.id).all()
     return {"data": messages_schema.dump(messages)}, HTTPStatus.OK
 
-@messages.get("/user/<int:id>")
+@messages.get("/<int:id>")
 @jwt_required()
 def read_one(id):
+    current_user_id = get_jwt_identity()
     
-    message = Message.query.filter_by(id=id).all()
+    message = Message.query.filter_by(id=id, creator_user=current_user_id).first()
 
     if (not message):
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND
@@ -28,22 +33,26 @@ def read_one(id):
     return {"data": messages_schema.dump(message)}, HTTPStatus.OK
 
 @messages.post("/")
+@jwt_required()
 def create():
-    post_data = None
+    current_user_id = get_jwt_identity()
     
+    post_data = None
     try:
         post_data = request.get_json()
     except werkzeug.exceptions.BadRequest as e:
         return {"error": "Post body JSON data not found", "message": str(e)}, HTTPStatus.BAD_REQUEST
-    fecha_request = request.get_json().get("fecha", None)
-    fecha_date = datetime.strptime(fecha_request, '%Y-%m-%d').date()
+    date_request = request.get_json().get("date", None)
+    date_m = datetime.strptime(date_request, '%Y-%m-%d').date()
 
 
-    message = Message(date=request.get_json().get("date", None),
+    message = Message(
+        date=date_m,
         addressee=request.get_json().get("addressee", None),
         type_message=request.get_json().get("type_message", None),
         description=request.get_json().get("description", None),
-        creator_user=request.get_json().get("creator_user", None))
+        creator_user=current_user_id
+        )
 
     try:
         db.session.add(message)
@@ -53,9 +62,10 @@ def create():
 
     return {"data": message_schema.dump(message)}, HTTPStatus.CREATED
 
-@messages.put("/id")
+@messages.put("/<int:id>")
 @jwt_required()
 def update(id):
+    current_user_id=get_jwt_identity()
     
     post_data = None
 
@@ -64,20 +74,19 @@ def update(id):
     except werkzeug.exceptions.BadRequest as e:
         return {"error": "Post body JSON data not found", "message": str(e)}, HTTPStatus.BAD_REQUEST
 
-    message = Message.query.filter_by(id=id).first()
+    message = Message.query.filter_by(id=id, creator_user=current_user_id).first()
 
     if not message:
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND
 
-    fecha_request = request.get_json().get("fecha", None)
-    fecha_date = datetime.strptime(fecha_request, '%Y-%m-%d').date()
+    data_request = request.get_json().get("fecha", None)
+    date_m = datetime.strptime(data_request, '%Y-%m-%d').date()
 
 
-    message.date = request.get_json().get("date", message.date)
+    message.date = date_m,
     message.addressee = request.get_json().get("addressee", message.addressee)
     message.type_message = request.get_json().get("type_message", message.type_message)
     message.description = request.get_json().get("description", message.description)
-
 
     try:
         db.session.commit()
@@ -88,8 +97,9 @@ def update(id):
 @messages.delete("/<int:id>")
 @jwt_required()
 def delete(id):
-    message = Message.query.filter_by(id=id).first()
-
+    current_user_id=get_jwt_identity()
+    message = Message.query.filter_by(id=id, creator_user=current_user_id).first()
+    
     if not messages:
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND
 
@@ -100,25 +110,3 @@ def delete(id):
         return {"error": "Invalid resource values", "message": str(e)}, HTTPStatus.BAD_REQUEST
 
     return {"data": message_schema.dump(message)}, HTTPStatus.NO_CONTENT
-
-
-@messages.get("/user/<int:creator_user>/fecha")
-@jwt_required()
-def read_by_date_range(creator_user):
-    date = None
-    try:
-        date = request.get_json()
-    
-    except werkzeug.exceptions.BadRequest as e:
-        return {"error": "Get body JSON data not found", 
-                "message": str(e)}, HTTPStatus.BAD_REQUEST
-    
-    fecha_request_i = request.get_json().get("fecha_inicio", None)
-    fecha_request_f = request.get_json().get("fecha_fin", None)  
-        
-    fecha_inicio = datetime.strptime(fecha_request_i, '%Y-%m-%d').date()
-    fecha_fin    = datetime.strptime(fecha_request_f, '%Y-%m-%d').date()
-
-    messages = Message.query.filter_by(creator_user=creator_user).filter(Message.fecha >= fecha_inicio, Message.fecha <= fecha_fin).all()
-        
-    return {"data": messages_schema.dump(messages)}, HTTPStatus.OK

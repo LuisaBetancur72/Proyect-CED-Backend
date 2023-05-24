@@ -74,7 +74,7 @@ class Message(db.Model):
         if Message.query.filter(Message.email == value).first():
             raise AssertionError('Email is already in use')
         return value
-
+    
 class MessageSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model=Message
