@@ -13,7 +13,6 @@ class Message(db.Model):
     updated_at    =db.Column(db.DateTime, onupdate=datetime.now())
     creator_user  =db.Column(db.String(25),db.ForeignKey('user.email',onupdate="CASCADE",ondelete="RESTRICT"),nullable=False)
     
-    
     def __init__(self, **fields):
         super().__init__(**fields)
 

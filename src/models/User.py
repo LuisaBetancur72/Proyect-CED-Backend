@@ -66,8 +66,6 @@ class User(db.Model):
 
         return value
     
-    
-    
     @validates(phone)
     def validate_phone(self,value):
         if not value:
