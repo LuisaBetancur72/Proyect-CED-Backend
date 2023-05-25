@@ -7,7 +7,6 @@ class Config:
     ENVIRONMENT = environ.get('ENVIRONMENT')
     JWT_ACCESS_TOKEN_EXPIRES=timedelta(hours=int(environ.get('JWT_ACCESS_TOKEN_EXPIRES_HOURS')))
 
-
 class DevelopmentConfig(Config):
     """Development config"""
     SECRET_KEY = environ.get('DEVELOPMENT_SECRET_KEY')

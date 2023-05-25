@@ -5,10 +5,13 @@ from src.database import db,ma
 import werkzeug
 from src.models.user import User, user_schema, users_schema
 from src.models.message import Message, message_schema,messages_schema
+from flask_cors import cross_origin,CORS
+
 
 from flask_jwt_extended import jwt_required,get_jwt_identity
 
-users = Blueprint("users",__name__,url_prefix="/api/v1/users")
+users = Blueprint("users",__name__)
+CORS(users)
 
 @users.get("/all")
 def read_all():
@@ -27,8 +30,10 @@ def read_user():
 
     return {"data":user_schema.dump(user)},HTTPStatus.OK
 
-@users.post("/")
+@users.route('/api/v1/users', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def create():
+    
     post_data = None
     try:
         post_data = request.get_json()
@@ -48,6 +53,7 @@ def create():
         return {"error":"Invalid resource values","message":str(e)},HTTPStatus.BAD_REQUEST
 
     return {"data":user_schema.dump(user)},HTTPStatus.CREATED
+
 
 @users.put('/update')
 @jwt_required()
