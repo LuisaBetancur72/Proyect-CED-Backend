@@ -19,7 +19,7 @@ class Message(db.Model):
     def __repr__(self) -> str:
         return f"User >>> {self.name}"
 
-    @validates(id)
+    @validates("id")
     def validate_id(self,value):
         if not value:
             raise AssertionError('No id provided')
@@ -30,7 +30,7 @@ class Message(db.Model):
 
         return value
     
-    @validates(date)
+    @validates("date")
     def validate_expiration(self, key, value):
         if not value:
             raise value
@@ -40,7 +40,7 @@ class Message(db.Model):
         
         return value
     
-    @validates(description)
+    @validates("description")
     def validate_name(self, key, value):
         if not value:
             raise AssertionError('No description provided')
@@ -51,7 +51,7 @@ class Message(db.Model):
 
         return value
         
-    @validates(type_message)
+    @validates("type_message")
     def validate_name(self, key, value):
         if not value:
             raise AssertionError('No type_message provided')
@@ -62,7 +62,7 @@ class Message(db.Model):
 
         return value
     
-    @validates(addressee)
+    @validates("addressee")
     def validate_email(self, key, value):
         if not value:
             raise AssertionError('addressee not provided')

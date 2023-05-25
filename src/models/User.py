@@ -11,7 +11,7 @@ class User(db.Model):
     id            =db.Column(db.Integer, primary_key= True, autoincrement=True)
     email         =db.Column(db.String(60), unique=True, nullable =False)
     fullname      =db.Column(db.String(50), nullable=False)
-    password      =db.Column(db.String(50), unique= True, nullable=False)
+    password      =db.Column(db.String(150), unique= True, nullable=False)
     phone         =db.Column(db.String(11), nullable=False)
     created_at    = db.Column(db.DateTime, default=datetime.now())
     updated_at    = db.Column(db.DateTime, onupdate=datetime.now())
@@ -43,7 +43,7 @@ class User(db.Model):
     def check_password(self,password):
         return check_password_hash(self.password,password)
     
-    @validates(email)
+    @validates('email')
     def validate_email(self, key, value):
         if not value:
             raise AssertionError('Email not provided')
