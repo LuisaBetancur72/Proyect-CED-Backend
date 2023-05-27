@@ -19,7 +19,7 @@ def read_all():
  return {"data": users_schema.dump(users)}, HTTPStatus.OK
 
 
-@users.get("/")
+@users.get("/me")
 @jwt_required()
 def read_user():
     current_user_id=get_jwt_identity()
@@ -41,10 +41,14 @@ def create():
         return {"error":"Posr body JSON data not found","message":str(e)},HTTPStatus.BAD_REQUEST
 
     user = User(
+        type_user=request.json.get("type_user",None),
         fullname=request.json.get("fullname", None),
         email=request.json.get("email", None),
         password=request.json.get("password", None),
-        phone=request.json.get("phone", None)
+        phone=request.json.get("phone", None),
+        Departamento=request.json.get("Departamento", None),
+        Municipio=request.json.get("Municipio", None)
+        
     )
     try:
         db.session.add(user)
@@ -73,11 +77,14 @@ def update():
 
     if(not user):
         return {"error":"Resource not found"}, HTTPStatus.NOT_FOUND
-
+    
+    user.type_user = request.json.get("type_user", user.type_user),
     user.fullname = request.json.get("fullname", user.fullname)
     user.email = request.json.get("email", user.email)
     user.password = request.json.get("password", user.password)
-    user.phone = request.json.get("phone", user.phone)
+    user.phone = request.json.get("phone", user.phone),
+    user.Departamento = request.json.get("Departamento", user.Departamento),
+    user.Municipio = request.json.get("Municipio", user.Municipio),
 
     try:
         db.session.commit()
