@@ -5,7 +5,6 @@ import re
 
 class Message(db.Model):
     id            =db.Column(db.Integer, primary_key= True, autoincrement=True)
-    date          =db.Column(db.Date, nullable=False)
     addressee     =db.Column(db.String(25), nullable=False)
     type_message  =db.Column(db.String(25), nullable=False)
     description   =db.Column(db.String(50), nullable=False)
@@ -19,7 +18,7 @@ class Message(db.Model):
     def __repr__(self) -> str:
         return f"User >>> {self.name}"
 
-    @validates(id)
+    @validates("id")
     def validate_id(self,value):
         if not value:
             raise AssertionError('No id provided')
@@ -30,17 +29,8 @@ class Message(db.Model):
 
         return value
     
-    @validates(date)
-    def validate_expiration(self, key, value):
-        if not value:
-            raise value
-        if not re.match("[0-9]{1,2}\\-[0-9]{1,2}\\-[0-9]{4}", value):
-            raise AssertionError('Provided date is not a real date value')
-        date = datetime.datetime.strptime(value, "%Y-%m-%d")
-        
-        return value
     
-    @validates(description)
+    @validates("description")
     def validate_name(self, key, value):
         if not value:
             raise AssertionError('No description provided')
@@ -51,7 +41,7 @@ class Message(db.Model):
 
         return value
         
-    @validates(type_message)
+    @validates("type_message")
     def validate_name(self, key, value):
         if not value:
             raise AssertionError('No type_message provided')
@@ -62,7 +52,7 @@ class Message(db.Model):
 
         return value
     
-    @validates(addressee)
+    @validates("addressee")
     def validate_email(self, key, value):
         if not value:
             raise AssertionError('addressee not provided')

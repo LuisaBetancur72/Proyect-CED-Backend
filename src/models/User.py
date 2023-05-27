@@ -4,15 +4,19 @@ from werkzeug.security import generate_password_hash,check_password_hash
 from sqlalchemy.orm import validates
 from sqlalchemy import event
 import re
+from enum import Enum
 
 from .message import Message
 
 class User(db.Model):
     id            =db.Column(db.Integer, primary_key= True, autoincrement=True)
+    type_user     = db.Column(db.String(50), nullable=False)
     email         =db.Column(db.String(60), unique=True, nullable =False)
     fullname      =db.Column(db.String(50), nullable=False)
-    password      =db.Column(db.String(50), unique= True, nullable=False)
+    password      =db.Column(db.String(150), unique= True, nullable=False)
     phone         =db.Column(db.String(11), nullable=False)
+    Departamento  =db.Column(db.String(30), nullable=False)
+    Municipio     =db.Column(db.String(30), nullable=False)
     created_at    = db.Column(db.DateTime, default=datetime.now())
     updated_at    = db.Column(db.DateTime, onupdate=datetime.now())
 
@@ -43,7 +47,19 @@ class User(db.Model):
     def check_password(self,password):
         return check_password_hash(self.password,password)
     
-    @validates(email)
+    @validates(type_user)
+    def validate_nombre(self, value):
+        if not value:
+            raise AssertionError('No name provided')
+        if not value.isalnum():
+            raise AssertionError('Name value must be alphanumeric')
+        if len(value) < 5 or len(value) > 80:
+            raise AssertionError('Name must be between 5 and 80 characters')
+
+        return value
+        
+    
+    @validates('email')
     def validate_email(self, key, value):
         if not value:
             raise AssertionError('Email not provided')

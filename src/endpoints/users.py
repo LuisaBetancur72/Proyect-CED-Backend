@@ -5,10 +5,13 @@ from src.database import db,ma
 import werkzeug
 from src.models.user import User, user_schema, users_schema
 from src.models.message import Message, message_schema,messages_schema
+from flask_cors import cross_origin,CORS
+
 
 from flask_jwt_extended import jwt_required,get_jwt_identity
 
-users = Blueprint("users",__name__,url_prefix="/api/v1/users")
+users = Blueprint("users",__name__)
+CORS(users)
 
 @users.get("/all")
 def read_all():
@@ -16,7 +19,7 @@ def read_all():
  return {"data": users_schema.dump(users)}, HTTPStatus.OK
 
 
-@users.get("/")
+@users.get("/me")
 @jwt_required()
 def read_user():
     current_user_id=get_jwt_identity()
@@ -27,8 +30,10 @@ def read_user():
 
     return {"data":user_schema.dump(user)},HTTPStatus.OK
 
-@users.post("/")
+@users.route('/api/v1/users', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def create():
+    
     post_data = None
     try:
         post_data = request.get_json()
@@ -36,10 +41,14 @@ def create():
         return {"error":"Posr body JSON data not found","message":str(e)},HTTPStatus.BAD_REQUEST
 
     user = User(
+        type_user=request.json.get("type_user",None),
         fullname=request.json.get("fullname", None),
         email=request.json.get("email", None),
         password=request.json.get("password", None),
-        phone=request.json.get("phone", None)
+        phone=request.json.get("phone", None),
+        Departamento=request.json.get("Departamento", None),
+        Municipio=request.json.get("Municipio", None)
+        
     )
     try:
         db.session.add(user)
@@ -48,6 +57,7 @@ def create():
         return {"error":"Invalid resource values","message":str(e)},HTTPStatus.BAD_REQUEST
 
     return {"data":user_schema.dump(user)},HTTPStatus.CREATED
+
 
 @users.put('/update')
 @jwt_required()
@@ -67,11 +77,14 @@ def update():
 
     if(not user):
         return {"error":"Resource not found"}, HTTPStatus.NOT_FOUND
-
+    
+    user.type_user = request.json.get("type_user", user.type_user),
     user.fullname = request.json.get("fullname", user.fullname)
     user.email = request.json.get("email", user.email)
     user.password = request.json.get("password", user.password)
-    user.phone = request.json.get("phone", user.phone)
+    user.phone = request.json.get("phone", user.phone),
+    user.Departamento = request.json.get("Departamento", user.Departamento),
+    user.Municipio = request.json.get("Municipio", user.Municipio),
 
     try:
         db.session.commit()

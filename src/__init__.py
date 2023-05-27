@@ -1,5 +1,6 @@
 from flask import Flask
 from os import environ
+from flask_cors import CORS
 
 from src.database import db,ma,migrate,jwt
 from src.endpoints.messages import messages
@@ -31,6 +32,8 @@ def create_app():
    ma.init_app(app)
    migrate.init_app(app, db)
    jwt.init_app(app)
+   
+   CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 
    with app.app_context():
       #db.drop_all()

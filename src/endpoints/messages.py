@@ -40,19 +40,15 @@ def read_one(id):
 @jwt_required()
 def create():
     current_user_id = get_jwt_identity()
-    creator_user= current_user_id["id"]
+    creator_user= current_user_id["email"]
     
     post_data = None
     try:
         post_data = request.get_json()
     except werkzeug.exceptions.BadRequest as e:
         return {"error": "Post body JSON data not found", "message": str(e)}, HTTPStatus.BAD_REQUEST
-    date_request = request.get_json().get("date", None)
-    date_m = datetime.strptime(date_request, '%Y-%m-%d').date()
-
 
     message = Message(
-        date=date_m,
         addressee=request.get_json().get("addressee", None),
         type_message=request.get_json().get("type_message", None),
         description=request.get_json().get("description", None),
@@ -84,17 +80,9 @@ def update(id):
 
     if not message:
         return {"error": "Resource not found"}, HTTPStatus.NOT_FOUND
-
-    date_request = post_data.get("date")
-    if date_request:
-        try:
-            date_obj = datetime.strptime(date_request, "%Y-%m-%d").date()
-            message.date = date_obj
-        except ValueError:
-            return {"error": "Invalid date format", "date": date_request}, HTTPStatus.BAD_REQUEST
-        message.addressee = post_data.get("addressee", message.addressee)
-        message.type_message = post_data.get("type_message", message.type_message)
-        message.description = post_data.get("description", message.description)
+    message.addressee = post_data.get("addressee", None)
+    message.type_message = post_data.get("type_message", message.type_message)
+    message.description = post_data.get("description", message.description)
 
     try:
         db.session.commit()
