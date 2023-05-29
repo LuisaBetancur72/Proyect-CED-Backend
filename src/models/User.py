@@ -2,7 +2,8 @@ from datetime import datetime
 from src.database import db,ma
 from werkzeug.security import generate_password_hash,check_password_hash
 from sqlalchemy.orm import validates
-from sqlalchemy import event
+from sqlalchemy import event, Boolean
+from sqlalchemy.sql.expression import false
 import re
 from enum import Enum
 
@@ -15,6 +16,7 @@ class User(db.Model):
     fullname      =db.Column(db.String(50), nullable=False)
     password      =db.Column(db.String(150), unique= True, nullable=False)
     phone         =db.Column(db.String(11), nullable=False)
+    active        =db.Column(Boolean, nullable=False, server_default=false())
     Departamento  =db.Column(db.String(30), nullable=False)
     Municipio     =db.Column(db.String(30), nullable=False)
     created_at    = db.Column(db.DateTime, default=datetime.now())
@@ -24,6 +26,7 @@ class User(db.Model):
     
     def __init__(self, **fields):
         super().__init__(**fields)
+        self.active = False
 
     def __setattr__(self, name, value):
         if(name == "password"):

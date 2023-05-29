@@ -4,23 +4,30 @@ import sqlalchemy.exc
 from src.database import db, ma
 import werkzeug
 from datetime import datetime
+from flask_cors import cross_origin,CORS
 
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
+from src.models.user import User, users_schema, user_schema
 from src.models.message import Message, message_schema, messages_schema
 
-messages = Blueprint("messages",__name__,url_prefix="/api/v1/user/messages")
+messages = Blueprint("messages",__name__)
+CORS(messages)
 
-@messages.get("/")
-@jwt_required()
+@messages.route('/api/v1/user/messages/all', methods=['GET'])
+@cross_origin()
 def read_all():
-    current_user_id = get_jwt_identity()  
-    creator_user= current_user_id["id"]
-    
-    messages = Message.query.filter_by(creator_user=creator_user).first()
-      
     messages = Message.query.order_by(Message.id).all()
-    return {"data": messages_schema.dump(messages)}, HTTPStatus.OK
+    return messages_schema.dump(messages), HTTPStatus.OK
+
+@messages.route('/api/v1/messages/<int:id>', methods=['GET'])
+@cross_origin()
+def read_user_id(id):
+    message = Message.query.filter_by(id=id).first()
+    if not message:
+        return {"error": "Recurso no encontrado"}, HTTPStatus.NOT_FOUND
+
+    return {"data": message_schema.dump(message)}, HTTPStatus.OK
 
 
 @messages.get("/<int:id>")
@@ -36,12 +43,16 @@ def read_one(id):
 
     return {"data": message_schema.dump(message)}, HTTPStatus.OK
 
-@messages.post("/")
-@jwt_required()
+@messages.route('/api/v1/mensajes/redactar', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def create():
-    current_user_id = get_jwt_identity()
-    creator_user= current_user_id["email"]
+    if request.method == 'OPTIONS':
+        # Manejar la solicitud OPTIONS sin procesarla en el resto del código
+        return "", HTTPStatus.OK
+
     
+    creator_user = 'luisa@autonoma.com'
+
     post_data = None
     try:
         post_data = request.get_json()
@@ -49,11 +60,11 @@ def create():
         return {"error": "Post body JSON data not found", "message": str(e)}, HTTPStatus.BAD_REQUEST
 
     message = Message(
-        addressee=request.get_json().get("addressee", None),
-        type_message=request.get_json().get("type_message", None),
-        description=request.get_json().get("description", None),
+        addressee=post_data.get("addressee", None),
+        type_message=post_data.get("type_message", None),
+        description=post_data.get("description", None),
         creator_user=creator_user
-        )
+ )
 
     try:
         db.session.add(message)
@@ -62,6 +73,9 @@ def create():
         return {"error": "Invalid resource values", "message": str(e)}, HTTPStatus.BAD_REQUEST
 
     return {"data": message_schema.dump(message)}, HTTPStatus.CREATED
+
+
+
 
 @messages.put("/<int:id>")
 @jwt_required()

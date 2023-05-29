@@ -24,6 +24,9 @@ def create():
 
     access_token = create_access_token(identity=user_schema.dump(user))
     refresh_token = create_refresh_token(identity=user_schema.dump(user))
+    
+    if user.active != True and user.active != 1:
+        return jsonify({'message': 'Usuario no activo'}),HTTPStatus.UNAUTHORIZED
 
     response = {
         "access_token": access_token,
