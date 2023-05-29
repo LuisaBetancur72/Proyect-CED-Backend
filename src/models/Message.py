@@ -13,11 +13,13 @@ class Message(db.Model):
     updated_at    =db.Column(db.DateTime, onupdate=datetime.now())
     creator_user  =db.Column(db.String(25),db.ForeignKey('user.email',onupdate="CASCADE",ondelete="RESTRICT"),nullable=False)
     
+    
     def __init__(self, **fields):
         super().__init__(**fields)
 
     def __repr__(self) -> str:
         return f"User >>> {self.name}"
+    
 
     @validates("id")
     def validate_id(self,value):
@@ -30,6 +32,7 @@ class Message(db.Model):
 
         return value
     
+    
     @validates("date")
     def validate_expiration(self, key, value):
         if not value:
@@ -39,6 +42,7 @@ class Message(db.Model):
         date = datetime.datetime.strptime(value, "%Y-%m-%d")
         
         return value
+    
     
     @validates("description")
     def validate_name(self, key, value):
@@ -50,6 +54,7 @@ class Message(db.Model):
             raise AssertionError('description must be between 5 and 100 characters')
 
         return value
+    
         
     @validates("type_message")
     def validate_name(self, key, value):
@@ -61,6 +66,7 @@ class Message(db.Model):
             raise AssertionError('type_message must be between 5 and 100 characters')
 
         return value
+    
     
     @validates("addressee")
     def validate_email(self, key, value):
@@ -74,10 +80,12 @@ class Message(db.Model):
             raise AssertionError('addressee is already in use')
         return value
     
+    
 class MessageSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model=Message
         include_fk=True
+        
 
 message_schema = MessageSchema()
 messages_schema = MessageSchema(many=True)
