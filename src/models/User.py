@@ -26,6 +26,7 @@ class User(db.Model):
             value = User.hash_password(value)
 
         super(User,self).__setattr__(name, value)
+        
 
     @staticmethod
     def hash_password(password):
@@ -38,10 +39,12 @@ class User(db.Model):
     #    if len(password) < 7 or len(password) > 50:
     #        raise AssertionError('Password must be between 7 and 50 characters')
         return generate_password_hash(password)
+    
 
 
     def check_password(self,password):
         return check_password_hash(self.password,password)
+    
     
     @validates('email')
     def validate_email(self, key, value):
@@ -55,6 +58,7 @@ class User(db.Model):
             raise AssertionError('Email is already in use')
         return value
     
+    
     @validates(fullname)
     def validate_nombre(self, value):
         if not value:
@@ -66,6 +70,7 @@ class User(db.Model):
 
         return value
     
+    
     @validates(phone)
     def validate_phone(self,value):
         if not value:
@@ -76,12 +81,14 @@ class User(db.Model):
             raise AssertionError('lastname must be between 10 and 15 characters')
     
         return value
+    
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         #fields = ()
         model = User
         include_fk = True
+        
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
